@@ -1,0 +1,125 @@
+import React, { useState } from 'react';
+import { Layers, Box, AlertCircle } from 'lucide-react';
+import InputSection from './components/InputSection';
+import ThemeCard from './components/ThemeCard';
+import PluginCard from './components/PluginCard';
+import { getRecommendations } from './services/geminiService';
+import { RecommendationResponse, LoadingState } from './types';
+
+const App: React.FC = () => {
+  const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
+  const [data, setData] = useState<RecommendationResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async (websiteType: string) => {
+    setLoadingState(LoadingState.LOADING);
+    setError(null);
+    setData(null);
+
+    try {
+      const result = await getRecommendations(websiteType);
+      setData(result);
+      setLoadingState(LoadingState.SUCCESS);
+    } catch (err) {
+      setError("Failed to generate recommendations. Please check your API key and try again.");
+      setLoadingState(LoadingState.ERROR);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="bg-indigo-600 p-1.5 rounded-lg">
+                <Layers className="text-white h-5 w-5" />
+            </div>
+            <span className="text-lg font-bold text-slate-900 tracking-tight">WP Stack Architect</span>
+          </div>
+          <div className="text-xs text-slate-400 font-medium">
+            Powered by Gemini 2.5
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow flex flex-col">
+        <div className={`transition-all duration-500 ease-in-out ${loadingState === LoadingState.IDLE ? 'flex-grow flex items-center justify-center' : 'py-12'}`}>
+          <InputSection 
+            onGenerate={handleGenerate} 
+            isLoading={loadingState === LoadingState.LOADING} 
+          />
+        </div>
+
+        {loadingState === LoadingState.ERROR && (
+          <div className="max-w-2xl mx-auto w-full px-4 mb-12">
+             <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center text-red-700">
+               <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+               <p>{error}</p>
+             </div>
+          </div>
+        )}
+
+        {loadingState === LoadingState.SUCCESS && data && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 w-full animate-fade-in">
+            
+            <div className="mb-12 text-center">
+                <h2 className="text-2xl font-bold text-slate-800">
+                   Stack Recommendation for <span className="text-indigo-600 border-b-2 border-indigo-200">{data.websiteContext}</span>
+                </h2>
+            </div>
+
+            {/* Themes Section */}
+            <div className="mb-16">
+              <div className="flex items-center mb-8">
+                <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                   <Layers className="text-indigo-600 w-6 h-6" />
+                </div>
+                <div>
+                   <h2 className="text-2xl font-bold text-slate-900">Top 10 Themes</h2>
+                   <p className="text-slate-500 text-sm">Design foundations optimized for your niche</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data.themes.map((theme, index) => (
+                  <ThemeCard key={index} theme={theme} index={index} />
+                ))}
+              </div>
+            </div>
+
+            {/* Plugins Section */}
+            <div>
+              <div className="flex items-center mb-8">
+                <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                   <Box className="text-emerald-600 w-6 h-6" />
+                </div>
+                <div>
+                   <h2 className="text-2xl font-bold text-slate-900">Top 10 Essential Plugins</h2>
+                   <p className="text-slate-500 text-sm">Functionality extenders to power your workflows</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {data.plugins.map((plugin, index) => (
+                  <PluginCard key={index} plugin={plugin} index={index} />
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} WP Stack Architect. Recommendations generated by AI.</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
