@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/theme-and-plugin/', // <-- set this to your repo name, e.g. '/wp-stack-architect/'
+    base: '/theme_and_plugin/', // <-- set this to your repo name, e.g. '/wp-stack-architect/'
     server: {
       port: 3000,
       host: '0.0.0.0',
